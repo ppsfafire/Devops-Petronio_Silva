@@ -82,6 +82,20 @@ docker-compose up --build
 
 **Servidor EC2**: `18.117.195.190` (us-east-2)
 
+### 5. Configurar GitHub Actions
+
+```bash
+# Configurar secrets no GitHub (ver GITHUB_ACTIONS_SETUP.md)
+# DOCKER_USERNAME: ppsfafire
+# DOCKER_PASSWORD: [sua senha]
+# EC2_SSH_KEY: [conteúdo da chave .pem]
+
+# Fazer push para testar o pipeline
+git push origin dev
+```
+
+**Deploy Automático**: Push para `dev`, `staging` ou `master` → Deploy automático no EC2
+
 ## 🔧 Configuração da Infraestrutura AWS
 
 ### 1. Configurar AWS CLI

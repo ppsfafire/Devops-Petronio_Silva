@@ -7,11 +7,10 @@ on:
     branches: [ dev, staging, master ]
 
 env:
-  AWS_REGION: us-east-1
-  ECR_REPOSITORY: devops-petronio-silva
-  ECS_CLUSTER: devops-cluster
-  ECS_SERVICE: devops-service
-  ECS_TASK_DEFINITION: devops-task-definition
+  EC2_HOST: ec2-18-117-195-190.us-east-2.compute.amazonaws.com
+  EC2_IP: 18.117.195.190
+  EC2_USER: ubuntu
+  DOCKER_USERNAME: ppsfafire
 
 jobs:
   test:
@@ -50,36 +49,30 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ env.AWS_REGION }}
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
 
-    - name: Login to Amazon ECR
-      id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v2
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
 
     - name: Build and push backend image
-      env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        IMAGE_TAG: ${{ github.sha }}
       run: |
         cd backend
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY-backend:$IMAGE_TAG .
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY-backend:$IMAGE_TAG
-        echo "backend-image=$ECR_REGISTRY/$ECR_REPOSITORY-backend:$IMAGE_TAG" >> $GITHUB_OUTPUT
+        docker build -t ${{ env.DOCKER_USERNAME }}/devops-backend:${{ github.sha }} .
+        docker build -t ${{ env.DOCKER_USERNAME }}/devops-backend:latest .
+        docker push ${{ env.DOCKER_USERNAME }}/devops-backend:${{ github.sha }}
+        docker push ${{ env.DOCKER_USERNAME }}/devops-backend:latest
 
     - name: Build and push frontend image
-      env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        IMAGE_TAG: ${{ github.sha }}
       run: |
         cd frontend
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY-frontend:$IMAGE_TAG .
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY-frontend:$IMAGE_TAG
-        echo "frontend-image=$ECR_REGISTRY/$ECR_REPOSITORY-frontend:$IMAGE_TAG" >> $GITHUB_OUTPUT
+        docker build -t ${{ env.DOCKER_USERNAME }}/devops-frontend:${{ github.sha }} .
+        docker build -t ${{ env.DOCKER_USERNAME }}/devops-frontend:latest .
+        docker push ${{ env.DOCKER_USERNAME }}/devops-frontend:${{ github.sha }}
+        docker push ${{ env.DOCKER_USERNAME }}/devops-frontend:latest
 
   deploy-dev:
     needs: build-and-push
@@ -88,25 +81,22 @@ jobs:
     environment: development
     
     steps:
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v4
+    - name: Deploy to EC2
+      uses: appleboy/ssh-action@v1.0.3
       with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ env.AWS_REGION }}
+        host: ${{ env.EC2_IP }}
+        username: ${{ env.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          cd /opt/devops-app
+          docker-compose pull
+          docker-compose up -d
+          docker-compose ps
 
-    - name: Deploy to ECS
+    - name: Health check
       run: |
-        aws ecs update-service \
-          --cluster ${{ env.ECS_CLUSTER }}-dev \
-          --service ${{ env.ECS_SERVICE }}-dev \
-          --force-new-deployment
-
-    - name: Wait for deployment
-      run: |
-        aws ecs wait services-stable \
-          --cluster ${{ env.ECS_CLUSTER }}-dev \
-          --services ${{ env.ECS_SERVICE }}-dev
+        sleep 30
+        curl -f http://${{ env.EC2_IP }}:3001/api/health || exit 1
 
   deploy-staging:
     needs: build-and-push
@@ -115,25 +105,22 @@ jobs:
     environment: staging
     
     steps:
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v4
+    - name: Deploy to EC2 (Staging)
+      uses: appleboy/ssh-action@v1.0.3
       with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ env.AWS_REGION }}
+        host: ${{ env.EC2_IP }}
+        username: ${{ env.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          cd /opt/devops-app
+          docker-compose pull
+          docker-compose up -d
+          docker-compose ps
 
-    - name: Deploy to ECS
+    - name: Health check (Staging)
       run: |
-        aws ecs update-service \
-          --cluster ${{ env.ECS_CLUSTER }}-staging \
-          --service ${{ env.ECS_SERVICE }}-staging \
-          --force-new-deployment
-
-    - name: Wait for deployment
-      run: |
-        aws ecs wait services-stable \
-          --cluster ${{ env.ECS_CLUSTER }}-staging \
-          --services ${{ env.ECS_SERVICE }}-staging
+        sleep 30
+        curl -f http://${{ env.EC2_IP }}:3001/api/health || exit 1
 
   deploy-production:
     needs: build-and-push
@@ -142,25 +129,22 @@ jobs:
     environment: production
     
     steps:
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v4
+    - name: Deploy to EC2 (Production)
+      uses: appleboy/ssh-action@v1.0.3
       with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ env.AWS_REGION }}
+        host: ${{ env.EC2_IP }}
+        username: ${{ env.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          cd /opt/devops-app
+          docker-compose pull
+          docker-compose up -d
+          docker-compose ps
 
-    - name: Deploy to ECS
+    - name: Health check (Production)
       run: |
-        aws ecs update-service \
-          --cluster ${{ env.ECS_CLUSTER }}-prod \
-          --service ${{ env.ECS_SERVICE }}-prod \
-          --force-new-deployment
-
-    - name: Wait for deployment
-      run: |
-        aws ecs wait services-stable \
-          --cluster ${{ env.ECS_CLUSTER }}-prod \
-          --services ${{ env.ECS_SERVICE }}-prod
+        sleep 30
+        curl -f http://${{ env.EC2_IP }}:3001/api/health || exit 1
 
     - name: Notify deployment success
       run: |
@@ -168,3 +152,4 @@ jobs:
         echo "📅 Data: $(date)"
         echo "🔗 Branch: ${{ github.ref }}"
         echo "👤 Autor: ${{ github.actor }}"
+        echo "🌐 URL: http://${{ env.EC2_IP }}"
