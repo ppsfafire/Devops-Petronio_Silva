@@ -1,6 +1,12 @@
 import { render, screen } from '@testing-library/react';
 import App from './App';
 
+// Mock axios para evitar problemas de rede nos testes
+jest.mock('axios', () => ({
+  get: jest.fn(() => Promise.resolve({ data: {} })),
+  post: jest.fn(() => Promise.resolve({ data: {} }))
+}));
+
 test('renders application title', () => {
   render(<App />);
   const titleElement = screen.getByText(/Aplicação DevOps/i);
