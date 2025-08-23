@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    container_name: devops-backend
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+    restart: unless-stopped
+    networks:
+      - devops-network
+
+  frontend:
+    build: ./frontend
+    container_name: devops-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    environment:
+      - REACT_APP_API_URL=http://localhost:3001
+    restart: unless-stopped
+    networks:
+      - devops-network
+
+networks:
+  devops-network:
+    driver: bridge

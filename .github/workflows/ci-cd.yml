@@ -1,0 +1,170 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ dev, staging, master ]
+  pull_request:
+    branches: [ dev, staging, master ]
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: devops-petronio-silva
+  ECS_CLUSTER: devops-cluster
+  ECS_SERVICE: devops-service
+  ECS_TASK_DEFINITION: devops-task-definition
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: |
+        npm run install:all
+
+    - name: Run backend tests
+      run: |
+        cd backend
+        npm test --if-present
+
+    - name: Run frontend tests
+      run: |
+        cd frontend
+        npm test --if-present
+
+  build-and-push:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Build and push backend image
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        cd backend
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY-backend:$IMAGE_TAG .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY-backend:$IMAGE_TAG
+        echo "backend-image=$ECR_REGISTRY/$ECR_REPOSITORY-backend:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+    - name: Build and push frontend image
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        cd frontend
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY-frontend:$IMAGE_TAG .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY-frontend:$IMAGE_TAG
+        echo "frontend-image=$ECR_REGISTRY/$ECR_REPOSITORY-frontend:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+  deploy-dev:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/dev'
+    environment: development
+    
+    steps:
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Deploy to ECS
+      run: |
+        aws ecs update-service \
+          --cluster ${{ env.ECS_CLUSTER }}-dev \
+          --service ${{ env.ECS_SERVICE }}-dev \
+          --force-new-deployment
+
+    - name: Wait for deployment
+      run: |
+        aws ecs wait services-stable \
+          --cluster ${{ env.ECS_CLUSTER }}-dev \
+          --services ${{ env.ECS_SERVICE }}-dev
+
+  deploy-staging:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/staging'
+    environment: staging
+    
+    steps:
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Deploy to ECS
+      run: |
+        aws ecs update-service \
+          --cluster ${{ env.ECS_CLUSTER }}-staging \
+          --service ${{ env.ECS_SERVICE }}-staging \
+          --force-new-deployment
+
+    - name: Wait for deployment
+      run: |
+        aws ecs wait services-stable \
+          --cluster ${{ env.ECS_CLUSTER }}-staging \
+          --services ${{ env.ECS_SERVICE }}-staging
+
+  deploy-production:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+    environment: production
+    
+    steps:
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Deploy to ECS
+      run: |
+        aws ecs update-service \
+          --cluster ${{ env.ECS_CLUSTER }}-prod \
+          --service ${{ env.ECS_SERVICE }}-prod \
+          --force-new-deployment
+
+    - name: Wait for deployment
+      run: |
+        aws ecs wait services-stable \
+          --cluster ${{ env.ECS_CLUSTER }}-prod \
+          --services ${{ env.ECS_SERVICE }}-prod
+
+    - name: Notify deployment success
+      run: |
+        echo "🚀 Deploy para produção concluído com sucesso!"
+        echo "📅 Data: $(date)"
+        echo "🔗 Branch: ${{ github.ref }}"
+        echo "👤 Autor: ${{ github.actor }}"
