@@ -54,9 +54,15 @@ A aplicação estará disponível em:
 ### 3. Executar com Docker
 
 ```bash
-# Build e execução com Docker Compose
+# Usar script de comandos Docker (recomendado)
+./docker-commands.sh build
+./docker-commands.sh up
+
+# Ou usar Docker Compose diretamente
 docker-compose up --build
 ```
+
+**Imagens Docker Hub**: `ppsfafire/devops-backend` e `ppsfafire/devops-frontend`
 
 ## 🔧 Configuração da Infraestrutura AWS
 
@@ -157,16 +163,20 @@ npm run dev:frontend
 ### Docker
 
 ```bash
-# Build e execução
+# Usar script de comandos (recomendado)
+./docker-commands.sh build    # Build das imagens
+./docker-commands.sh up       # Iniciar containers
+./docker-commands.sh down     # Parar containers
+./docker-commands.sh logs     # Ver logs
+./docker-commands.sh status   # Status dos containers
+./docker-commands.sh test     # Testar aplicação
+./docker-commands.sh push     # Push para Docker Hub
+./docker-commands.sh clean    # Limpar tudo
+
+# Ou usar Docker Compose diretamente
 docker-compose up --build
-
-# Executar em background
 docker-compose up -d
-
-# Parar containers
 docker-compose down
-
-# Ver logs
 docker-compose logs -f
 ```
 

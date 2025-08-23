@@ -2,7 +2,10 @@ version: '3.8'
 
 services:
   backend:
-    build: ./backend
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    image: ppsfafire/devops-backend:latest
     container_name: devops-backend
     ports:
       - "3001:3001"
@@ -14,7 +17,10 @@ services:
       - devops-network
 
   frontend:
-    build: ./frontend
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: ppsfafire/devops-frontend:latest
     container_name: devops-frontend
     ports:
       - "80:80"

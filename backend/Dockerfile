@@ -1,5 +1,9 @@
 FROM node:18-alpine
 
+LABEL maintainer="ppsfafire"
+LABEL version="1.0"
+LABEL description="Backend da aplicação DevOps - Petronio Silva"
+
 WORKDIR /app
 
 # Copiar package.json e package-lock.json

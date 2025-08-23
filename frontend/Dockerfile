@@ -1,6 +1,10 @@
 # Build stage
 FROM node:18-alpine as build
 
+LABEL maintainer="ppsfafire"
+LABEL version="1.0"
+LABEL description="Frontend da aplicação DevOps - Petronio Silva"
+
 WORKDIR /app
 
 # Copiar package.json e package-lock.json
@@ -17,6 +21,10 @@ RUN npm run build
 
 # Production stage
 FROM nginx:alpine
+
+LABEL maintainer="ppsfafire"
+LABEL version="1.0"
+LABEL description="Frontend da aplicação DevOps - Petronio Silva"
 
 # Copiar build do React
 COPY --from=build /app/build /usr/share/nginx/html
