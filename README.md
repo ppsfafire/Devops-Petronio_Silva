@@ -64,6 +64,24 @@ docker-compose up --build
 
 **Imagens Docker Hub**: `ppsfafire/devops-backend` e `ppsfafire/devops-frontend`
 
+### 4. Deploy no EC2 (Opcional)
+
+```bash
+# Configurar servidor EC2
+./deploy-ec2.sh setup
+
+# Build e push das imagens
+./deploy-ec2.sh build
+
+# Deploy da aplicação
+./deploy-ec2.sh deploy
+
+# Verificar status
+./deploy-ec2.sh status
+```
+
+**Servidor EC2**: `18.117.195.190` (us-east-2)
+
 ## 🔧 Configuração da Infraestrutura AWS
 
 ### 1. Configurar AWS CLI
