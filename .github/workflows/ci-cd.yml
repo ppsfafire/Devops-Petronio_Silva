@@ -88,15 +88,79 @@ jobs:
         username: ${{ env.EC2_USER }}
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
+          # Criar diretório se não existir
+          sudo mkdir -p /opt/devops-app
+          sudo chown $USER:$USER /opt/devops-app
           cd /opt/devops-app
+          
+          # Instalar docker-compose se não estiver instalado
+          if ! command -v docker-compose &> /dev/null; then
+            echo "Instalando docker-compose..."
+            sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+            sudo chmod +x /usr/local/bin/docker-compose
+          fi
+          
+          # Criar docker-compose.yml se não existir
+          if [ ! -f docker-compose.yml ]; then
+            cat > docker-compose.yml << 'EOF'
+          version: '3.8'
+          
+          services:
+            frontend:
+              image: ppsfafire/devops-frontend:latest
+              ports:
+                - "3000:3000"
+              environment:
+                - REACT_APP_API_URL=http://localhost:5000
+              depends_on:
+                - backend
+              restart: unless-stopped
+            
+            backend:
+              image: ppsfafire/devops-backend:latest
+              ports:
+                - "5000:5000"
+              environment:
+                - NODE_ENV=production
+                - PORT=5000
+              restart: unless-stopped
+              volumes:
+                - ./logs:/app/logs
+          
+          networks:
+            default:
+              driver: bridge
+          EOF
+          fi
+          
+          # Parar containers existentes
+          docker-compose down || true
+          
+          # Fazer pull das imagens
           docker-compose pull
+          
+          # Iniciar containers
           docker-compose up -d
+          
+          # Verificar status
           docker-compose ps
+          
+          # Aguardar um pouco e verificar logs
+          sleep 10
+          echo "=== Logs do Backend ==="
+          docker-compose logs backend --tail=20
+          echo "=== Logs do Frontend ==="
+          docker-compose logs frontend --tail=20
 
     - name: Health check
       run: |
         sleep 30
-        curl -f http://${{ env.EC2_IP }}:3001/api/health || exit 1
+        echo "🔍 Verificando saúde da aplicação..."
+        echo "📡 Testando backend na porta 5000..."
+        curl -f http://${{ env.EC2_IP }}:5000/api/health || echo "❌ Backend não respondeu"
+        echo "📡 Testando frontend na porta 3000..."
+        curl -f http://${{ env.EC2_IP }}:3000 || echo "❌ Frontend não respondeu"
+        echo "✅ Health check concluído!"
 
   deploy-staging:
     needs: build-and-push
@@ -112,15 +176,79 @@ jobs:
         username: ${{ env.EC2_USER }}
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
+          # Criar diretório se não existir
+          sudo mkdir -p /opt/devops-app
+          sudo chown $USER:$USER /opt/devops-app
           cd /opt/devops-app
+          
+          # Instalar docker-compose se não estiver instalado
+          if ! command -v docker-compose &> /dev/null; then
+            echo "Instalando docker-compose..."
+            sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+            sudo chmod +x /usr/local/bin/docker-compose
+          fi
+          
+          # Criar docker-compose.yml se não existir
+          if [ ! -f docker-compose.yml ]; then
+            cat > docker-compose.yml << 'EOF'
+          version: '3.8'
+          
+          services:
+            frontend:
+              image: ppsfafire/devops-frontend:latest
+              ports:
+                - "3000:3000"
+              environment:
+                - REACT_APP_API_URL=http://localhost:5000
+              depends_on:
+                - backend
+              restart: unless-stopped
+            
+            backend:
+              image: ppsfafire/devops-backend:latest
+              ports:
+                - "5000:5000"
+              environment:
+                - NODE_ENV=production
+                - PORT=5000
+              restart: unless-stopped
+              volumes:
+                - ./logs:/app/logs
+          
+          networks:
+            default:
+              driver: bridge
+          EOF
+          fi
+          
+          # Parar containers existentes
+          docker-compose down || true
+          
+          # Fazer pull das imagens
           docker-compose pull
+          
+          # Iniciar containers
           docker-compose up -d
+          
+          # Verificar status
           docker-compose ps
+          
+          # Aguardar um pouco e verificar logs
+          sleep 10
+          echo "=== Logs do Backend ==="
+          docker-compose logs backend --tail=20
+          echo "=== Logs do Frontend ==="
+          docker-compose logs frontend --tail=20
 
     - name: Health check (Staging)
       run: |
         sleep 30
-        curl -f http://${{ env.EC2_IP }}:3001/api/health || exit 1
+        echo "🔍 Verificando saúde da aplicação (Staging)..."
+        echo "📡 Testando backend na porta 5000..."
+        curl -f http://${{ env.EC2_IP }}:5000/api/health || echo "❌ Backend não respondeu"
+        echo "📡 Testando frontend na porta 3000..."
+        curl -f http://${{ env.EC2_IP }}:3000 || echo "❌ Frontend não respondeu"
+        echo "✅ Health check concluído!"
 
   deploy-production:
     needs: build-and-push
@@ -136,15 +264,79 @@ jobs:
         username: ${{ env.EC2_USER }}
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
+          # Criar diretório se não existir
+          sudo mkdir -p /opt/devops-app
+          sudo chown $USER:$USER /opt/devops-app
           cd /opt/devops-app
+          
+          # Instalar docker-compose se não estiver instalado
+          if ! command -v docker-compose &> /dev/null; then
+            echo "Instalando docker-compose..."
+            sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+            sudo chmod +x /usr/local/bin/docker-compose
+          fi
+          
+          # Criar docker-compose.yml se não existir
+          if [ ! -f docker-compose.yml ]; then
+            cat > docker-compose.yml << 'EOF'
+          version: '3.8'
+          
+          services:
+            frontend:
+              image: ppsfafire/devops-frontend:latest
+              ports:
+                - "3000:3000"
+              environment:
+                - REACT_APP_API_URL=http://localhost:5000
+              depends_on:
+                - backend
+              restart: unless-stopped
+            
+            backend:
+              image: ppsfafire/devops-backend:latest
+              ports:
+                - "5000:5000"
+              environment:
+                - NODE_ENV=production
+                - PORT=5000
+              restart: unless-stopped
+              volumes:
+                - ./logs:/app/logs
+          
+          networks:
+            default:
+              driver: bridge
+          EOF
+          fi
+          
+          # Parar containers existentes
+          docker-compose down || true
+          
+          # Fazer pull das imagens
           docker-compose pull
+          
+          # Iniciar containers
           docker-compose up -d
+          
+          # Verificar status
           docker-compose ps
+          
+          # Aguardar um pouco e verificar logs
+          sleep 10
+          echo "=== Logs do Backend ==="
+          docker-compose logs backend --tail=20
+          echo "=== Logs do Frontend ==="
+          docker-compose logs frontend --tail=20
 
     - name: Health check (Production)
       run: |
         sleep 30
-        curl -f http://${{ env.EC2_IP }}:3001/api/health || exit 1
+        echo "🔍 Verificando saúde da aplicação (Production)..."
+        echo "📡 Testando backend na porta 5000..."
+        curl -f http://${{ env.EC2_IP }}:5000/api/health || echo "❌ Backend não respondeu"
+        echo "📡 Testando frontend na porta 3000..."
+        curl -f http://${{ env.EC2_IP }}:3000 || echo "❌ Frontend não respondeu"
+        echo "✅ Health check concluído!"
 
     - name: Notify deployment success
       run: |
