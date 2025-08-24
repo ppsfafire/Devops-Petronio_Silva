@@ -9,7 +9,7 @@ on:
 env:
   EC2_HOST: ec2-18-117-195-190.us-east-2.compute.amazonaws.com
   EC2_IP: 18.117.195.190
-  EC2_USER: ubuntu
+  EC2_USER: admin
   DOCKER_USERNAME: ppsfafire
 
 jobs:
