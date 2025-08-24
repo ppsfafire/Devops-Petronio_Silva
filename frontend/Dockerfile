@@ -33,7 +33,7 @@ COPY --from=build /app/build /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/nginx.conf
 
 # Expor porta
-EXPOSE 80
+EXPOSE 3000
 
 # Comando para iniciar nginx
 CMD ["nginx", "-g", "daemon off;"]
