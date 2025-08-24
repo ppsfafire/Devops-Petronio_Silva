@@ -166,13 +166,7 @@ jobs:
         sleep 30
         echo "📡 Testando conectividade com EC2..."
         
-        # Testar se o EC2 responde
-        if ! ping -c 1 -W 5 ${{ env.EC2_IP }} > /dev/null 2>&1; then
-          echo "❌ EC2 não responde ao ping"
-          exit 1
-        fi
-        
-        echo "✅ EC2 responde ao ping"
+        # Testar se o EC2 responde via HTTP (mais confiável que ping)
         echo "📡 Testando backend na porta 5000..."
         
         # Testar backend com timeout
@@ -285,13 +279,7 @@ jobs:
         sleep 30
         echo "📡 Testando conectividade com EC2..."
         
-        # Testar se o EC2 responde
-        if ! ping -c 1 -W 5 ${{ env.EC2_IP }} > /dev/null 2>&1; then
-          echo "❌ EC2 não responde ao ping"
-          exit 1
-        fi
-        
-        echo "✅ EC2 responde ao ping"
+        # Testar se o EC2 responde via HTTP (mais confiável que ping)
         echo "📡 Testando backend na porta 5000..."
         
         # Testar backend com timeout
@@ -404,13 +392,7 @@ jobs:
         sleep 30
         echo "📡 Testando conectividade com EC2..."
         
-        # Testar se o EC2 responde
-        if ! ping -c 1 -W 5 ${{ env.EC2_IP }} > /dev/null 2>&1; then
-          echo "❌ EC2 não responde ao ping"
-          exit 1
-        fi
-        
-        echo "✅ EC2 responde ao ping"
+        # Testar se o EC2 responde via HTTP (mais confiável que ping)
         echo "📡 Testando backend na porta 5000..."
         
         # Testar backend com timeout
