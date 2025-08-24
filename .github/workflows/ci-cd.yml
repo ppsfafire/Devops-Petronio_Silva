@@ -93,6 +93,14 @@ jobs:
           sudo chown $USER:$USER /opt/devops-app
           cd /opt/devops-app
           
+          # Adicionar usuário ao grupo docker se não estiver
+          if ! groups $USER | grep -q docker; then
+            echo "Adicionando usuário ao grupo docker..."
+            sudo usermod -aG docker $USER
+            # Recarregar grupos (pode não funcionar em SSH, mas tentamos)
+            newgrp docker || true
+          fi
+          
           # Instalar docker-compose se não estiver instalado
           if ! command -v docker-compose &> /dev/null; then
             echo "Instalando docker-compose..."
@@ -134,23 +142,23 @@ jobs:
           fi
           
           # Parar containers existentes
-          docker-compose down || true
+          sudo docker-compose down || true
           
           # Fazer pull das imagens
-          docker-compose pull
+          sudo docker-compose pull
           
           # Iniciar containers
-          docker-compose up -d
+          sudo docker-compose up -d
           
           # Verificar status
-          docker-compose ps
+          sudo docker-compose ps
           
           # Aguardar um pouco e verificar logs
           sleep 10
           echo "=== Logs do Backend ==="
-          docker-compose logs backend --tail=20
+          sudo docker-compose logs backend --tail=20
           echo "=== Logs do Frontend ==="
-          docker-compose logs frontend --tail=20
+          sudo docker-compose logs frontend --tail=20
 
     - name: Health check
       run: |
@@ -181,6 +189,14 @@ jobs:
           sudo chown $USER:$USER /opt/devops-app
           cd /opt/devops-app
           
+          # Adicionar usuário ao grupo docker se não estiver
+          if ! groups $USER | grep -q docker; then
+            echo "Adicionando usuário ao grupo docker..."
+            sudo usermod -aG docker $USER
+            # Recarregar grupos (pode não funcionar em SSH, mas tentamos)
+            newgrp docker || true
+          fi
+          
           # Instalar docker-compose se não estiver instalado
           if ! command -v docker-compose &> /dev/null; then
             echo "Instalando docker-compose..."
@@ -222,23 +238,23 @@ jobs:
           fi
           
           # Parar containers existentes
-          docker-compose down || true
+          sudo docker-compose down || true
           
           # Fazer pull das imagens
-          docker-compose pull
+          sudo docker-compose pull
           
           # Iniciar containers
-          docker-compose up -d
+          sudo docker-compose up -d
           
           # Verificar status
-          docker-compose ps
+          sudo docker-compose ps
           
           # Aguardar um pouco e verificar logs
           sleep 10
           echo "=== Logs do Backend ==="
-          docker-compose logs backend --tail=20
+          sudo docker-compose logs backend --tail=20
           echo "=== Logs do Frontend ==="
-          docker-compose logs frontend --tail=20
+          sudo docker-compose logs frontend --tail=20
 
     - name: Health check (Staging)
       run: |
@@ -269,6 +285,14 @@ jobs:
           sudo chown $USER:$USER /opt/devops-app
           cd /opt/devops-app
           
+          # Adicionar usuário ao grupo docker se não estiver
+          if ! groups $USER | grep -q docker; then
+            echo "Adicionando usuário ao grupo docker..."
+            sudo usermod -aG docker $USER
+            # Recarregar grupos (pode não funcionar em SSH, mas tentamos)
+            newgrp docker || true
+          fi
+          
           # Instalar docker-compose se não estiver instalado
           if ! command -v docker-compose &> /dev/null; then
             echo "Instalando docker-compose..."
@@ -310,23 +334,23 @@ jobs:
           fi
           
           # Parar containers existentes
-          docker-compose down || true
+          sudo docker-compose down || true
           
           # Fazer pull das imagens
-          docker-compose pull
+          sudo docker-compose pull
           
           # Iniciar containers
-          docker-compose up -d
+          sudo docker-compose up -d
           
           # Verificar status
-          docker-compose ps
+          sudo docker-compose ps
           
           # Aguardar um pouco e verificar logs
           sleep 10
           echo "=== Logs do Backend ==="
-          docker-compose logs backend --tail=20
+          sudo docker-compose logs backend --tail=20
           echo "=== Logs do Frontend ==="
-          docker-compose logs frontend --tail=20
+          sudo docker-compose logs frontend --tail=20
 
     - name: Health check (Production)
       run: |
