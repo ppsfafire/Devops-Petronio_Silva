@@ -69,8 +69,8 @@ jobs:
     - name: Build and push frontend image
       run: |
         cd frontend
-        docker build --build-arg REACT_APP_API_URL=http://backend:5000 -t ${{ env.DOCKER_USERNAME }}/devops-frontend:${{ github.sha }} .
-        docker build --build-arg REACT_APP_API_URL=http://backend:5000 -t ${{ env.DOCKER_USERNAME }}/devops-frontend:latest .
+        docker build --build-arg REACT_APP_API_URL=http://${{ env.EC2_IP }}:5000 -t ${{ env.DOCKER_USERNAME }}/devops-frontend:${{ github.sha }} .
+        docker build --build-arg REACT_APP_API_URL=http://${{ env.EC2_IP }}:5000 -t ${{ env.DOCKER_USERNAME }}/devops-frontend:latest .
         docker push ${{ env.DOCKER_USERNAME }}/devops-frontend:${{ github.sha }}
         docker push ${{ env.DOCKER_USERNAME }}/devops-frontend:latest
 
