@@ -9,7 +9,7 @@ function App() {
   const [newItem, setNewItem] = useState({ name: '', description: '' });
   const [message, setMessage] = useState('');
 
-  const API_BASE_URL = process.env.REACT_APP_API_URL;
+  const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
   // Verificar status da API
   const checkHealth = async () => {
@@ -143,7 +143,7 @@ function App() {
               {loading ? 'Carregando...' : 'Atualizar'}
             </button>
           </div>
-          {data.length > 0 ? (
+          {data && data.length > 0 ? (
             <div className="items-list">
               {data.map((item) => (
                 <div key={item.id} className="item">
