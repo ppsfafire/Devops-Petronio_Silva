@@ -9,7 +9,7 @@ function App() {
   const [newItem, setNewItem] = useState({ name: '', description: '' });
   const [message, setMessage] = useState('');
 
-  const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+  const API_BASE_URL = process.env.REACT_APP_API_URL;
 
   // Verificar status da API
   const checkHealth = async () => {
