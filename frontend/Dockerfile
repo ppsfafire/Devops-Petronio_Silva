@@ -25,6 +25,8 @@ RUN npm ci --no-audit --no-fund || \
 COPY . .
 
 # Build da aplicação
+ARG REACT_APP_API_URL
+ENV REACT_APP_API_URL=${REACT_APP_API_URL}
 RUN npm run build
 
 # Production stage
