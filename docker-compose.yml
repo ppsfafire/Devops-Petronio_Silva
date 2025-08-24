@@ -2,32 +2,26 @@ version: '3.8'
 
 services:
   backend:
-    build: 
-      context: ./backend
-      dockerfile: Dockerfile
     image: ppsfafire/devops-backend:latest
     container_name: devops-backend
     ports:
-      - "3001:3001"
+      - "5000:5000"
     environment:
       - NODE_ENV=production
-      - PORT=3001
+      - PORT=5000
     restart: unless-stopped
     networks:
       - devops-network
 
   frontend:
-    build: 
-      context: ./frontend
-      dockerfile: Dockerfile
     image: ppsfafire/devops-frontend:latest
     container_name: devops-frontend
     ports:
-      - "80:80"
+      - "3000:3000"
     depends_on:
       - backend
     environment:
-      - REACT_APP_API_URL=http://localhost:3001
+      - REACT_APP_API_URL=http://backend:5000
     restart: unless-stopped
     networks:
       - devops-network
