@@ -162,12 +162,35 @@ jobs:
 
     - name: Health check
       run: |
+        echo "🔍 Iniciando health check..."
         sleep 30
-        echo "🔍 Verificando saúde da aplicação..."
+        echo "📡 Testando conectividade com EC2..."
+        
+        # Testar se o EC2 responde
+        if ! ping -c 1 -W 5 ${{ env.EC2_IP }} > /dev/null 2>&1; then
+          echo "❌ EC2 não responde ao ping"
+          exit 1
+        fi
+        
+        echo "✅ EC2 responde ao ping"
         echo "📡 Testando backend na porta 5000..."
-        curl -f http://${{ env.EC2_IP }}:5000/api/health || echo "❌ Backend não respondeu"
+        
+        # Testar backend com timeout
+        if curl -f -m 10 http://${{ env.EC2_IP }}:5000/api/health; then
+          echo "✅ Backend respondeu com sucesso"
+        else
+          echo "❌ Backend não respondeu (timeout 10s)"
+        fi
+        
         echo "📡 Testando frontend na porta 3000..."
-        curl -f http://${{ env.EC2_IP }}:3000 || echo "❌ Frontend não respondeu"
+        
+        # Testar frontend com timeout
+        if curl -f -m 10 http://${{ env.EC2_IP }}:3000; then
+          echo "✅ Frontend respondeu com sucesso"
+        else
+          echo "❌ Frontend não respondeu (timeout 10s)"
+        fi
+        
         echo "✅ Health check concluído!"
 
   deploy-staging:
@@ -258,12 +281,35 @@ jobs:
 
     - name: Health check (Staging)
       run: |
+        echo "🔍 Iniciando health check (Staging)..."
         sleep 30
-        echo "🔍 Verificando saúde da aplicação (Staging)..."
+        echo "📡 Testando conectividade com EC2..."
+        
+        # Testar se o EC2 responde
+        if ! ping -c 1 -W 5 ${{ env.EC2_IP }} > /dev/null 2>&1; then
+          echo "❌ EC2 não responde ao ping"
+          exit 1
+        fi
+        
+        echo "✅ EC2 responde ao ping"
         echo "📡 Testando backend na porta 5000..."
-        curl -f http://${{ env.EC2_IP }}:5000/api/health || echo "❌ Backend não respondeu"
+        
+        # Testar backend com timeout
+        if curl -f -m 10 http://${{ env.EC2_IP }}:5000/api/health; then
+          echo "✅ Backend respondeu com sucesso"
+        else
+          echo "❌ Backend não respondeu (timeout 10s)"
+        fi
+        
         echo "📡 Testando frontend na porta 3000..."
-        curl -f http://${{ env.EC2_IP }}:3000 || echo "❌ Frontend não respondeu"
+        
+        # Testar frontend com timeout
+        if curl -f -m 10 http://${{ env.EC2_IP }}:3000; then
+          echo "✅ Frontend respondeu com sucesso"
+        else
+          echo "❌ Frontend não respondeu (timeout 10s)"
+        fi
+        
         echo "✅ Health check concluído!"
 
   deploy-production:
@@ -354,12 +400,35 @@ jobs:
 
     - name: Health check (Production)
       run: |
+        echo "🔍 Iniciando health check (Production)..."
         sleep 30
-        echo "🔍 Verificando saúde da aplicação (Production)..."
+        echo "📡 Testando conectividade com EC2..."
+        
+        # Testar se o EC2 responde
+        if ! ping -c 1 -W 5 ${{ env.EC2_IP }} > /dev/null 2>&1; then
+          echo "❌ EC2 não responde ao ping"
+          exit 1
+        fi
+        
+        echo "✅ EC2 responde ao ping"
         echo "📡 Testando backend na porta 5000..."
-        curl -f http://${{ env.EC2_IP }}:5000/api/health || echo "❌ Backend não respondeu"
+        
+        # Testar backend com timeout
+        if curl -f -m 10 http://${{ env.EC2_IP }}:5000/api/health; then
+          echo "✅ Backend respondeu com sucesso"
+        else
+          echo "❌ Backend não respondeu (timeout 10s)"
+        fi
+        
         echo "📡 Testando frontend na porta 3000..."
-        curl -f http://${{ env.EC2_IP }}:3000 || echo "❌ Frontend não respondeu"
+        
+        # Testar frontend com timeout
+        if curl -f -m 10 http://${{ env.EC2_IP }}:3000; then
+          echo "✅ Frontend respondeu com sucesso"
+        else
+          echo "❌ Frontend não respondeu (timeout 10s)"
+        fi
+        
         echo "✅ Health check concluído!"
 
     - name: Notify deployment success
