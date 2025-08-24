@@ -10,8 +10,16 @@ WORKDIR /app
 # Copiar package.json e package-lock.json
 COPY package*.json ./
 
-# Instalar dependências
-RUN npm ci
+# Configurar npm para usar cache e evitar rate limits
+RUN npm config set registry https://registry.npmjs.org/ && \
+    npm config set fetch-retries 5 && \
+    npm config set fetch-retry-mintimeout 20000 && \
+    npm config set fetch-retry-maxtimeout 120000
+
+# Instalar dependências com retry
+RUN npm ci --no-audit --no-fund || \
+    (sleep 30 && npm ci --no-audit --no-fund) || \
+    (sleep 60 && npm ci --no-audit --no-fund)
 
 # Copiar código da aplicação
 COPY . .
