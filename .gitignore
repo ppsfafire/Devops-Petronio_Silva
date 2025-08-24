@@ -69,3 +69,12 @@ Thumbs.db
 
 # AWS
 .aws/
+
+# SSH Keys
+*.pem
+*.ppk
+*.key
+
+# Temporary files
+*.tmp
+*.temp
