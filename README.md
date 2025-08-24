@@ -1,6 +1,6 @@
 # 🚀 Aplicação DevOps - Petronio Silva
 
-Este projeto demonstra uma aplicação completa com frontend e backend, implementando práticas de DevOps incluindo containerização com Docker, controle de versão com Git, e automação de deploy com GitHub Actions na AWS.
+Este projeto demonstra uma aplicação completa com frontend e backend, implementando práticas de DevOps incluindo containerização com Docker, controle de versão com Git, e automação de deploy com GitHub Actions na AWS EC2.
 
 ## 📋 Requisitos do Projeto
 
@@ -8,15 +8,15 @@ Este projeto demonstra uma aplicação completa com frontend e backend, implemen
 - ✅ **Contêinerização**: Docker para ambos frontend e backend
 - ✅ **Controle de Versão**: Git com branches Dev, Staging e Master
 - ✅ **Automação**: GitHub Actions para CI/CD
-- ✅ **Deploy**: AWS com ECS, ECR e ALB
+- ✅ **Deploy**: AWS EC2 com Docker Compose
 
 ## 🏗️ Arquitetura
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Frontend      │    │   Backend       │    │   AWS           │
-│   (React)       │◄──►│   (Node.js)     │◄──►│   ECS + ECR     │
-│   Porta 80      │    │   Porta 3001    │    │   + ALB         │
+│   Frontend      │    │   Backend       │    │   AWS EC2       │
+│   (React)       │◄──►│   (Node.js)     │◄──►│   Docker        │
+│   Porta 3000    │    │   Porta 5000    │    │   Compose       │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
@@ -27,8 +27,8 @@ Este projeto demonstra uma aplicação completa com frontend e backend, implemen
 - Node.js 18+
 - Docker e Docker Compose
 - Git
-- Conta AWS
-- Terraform (para infraestrutura)
+- Conta AWS (EC2)
+- Docker Hub (ppsfafire)
 
 ### 1. Clone o Repositório
 
@@ -40,98 +40,100 @@ cd Devops-Petronio_Silva
 ### 2. Instalação Local
 
 ```bash
-# Instalar dependências
-npm run install:all
+# Instalar dependências do backend
+cd backend && npm install
 
-# Executar em modo desenvolvimento
-npm run dev
+# Instalar dependências do frontend
+cd frontend && npm install
+
+# Executar backend
+cd backend && npm start
+
+# Executar frontend (em outro terminal)
+cd frontend && npm start
 ```
 
 A aplicação estará disponível em:
 - Frontend: http://localhost:3000
-- Backend: http://localhost:3001
+- Backend: http://localhost:5000
 
 ### 3. Executar com Docker
 
 ```bash
-# Usar script de comandos Docker (recomendado)
-./docker-commands.sh build
-./docker-commands.sh up
+# Build das imagens
+docker-compose build
 
-# Ou usar Docker Compose diretamente
-docker-compose up --build
+# Executar containers
+docker-compose up
+
+# Executar em background
+docker-compose up -d
+
+# Parar containers
+docker-compose down
 ```
 
 **Imagens Docker Hub**: `ppsfafire/devops-backend` e `ppsfafire/devops-frontend`
 
-### 4. Deploy no EC2 (Opcional)
+### 4. Deploy Automático (GitHub Actions)
+
+O deploy é automático via GitHub Actions quando você faz push para as branches:
 
 ```bash
-# Configurar servidor EC2
-./deploy-ec2.sh setup
+# Deploy para desenvolvimento
+git push origin dev
 
-# Build e push das imagens
-./deploy-ec2.sh build
+# Deploy para staging
+git push origin staging
 
-# Deploy da aplicação
-./deploy-ec2.sh deploy
-
-# Verificar status
-./deploy-ec2.sh status
+# Deploy para produção
+git push origin master
 ```
 
 **Servidor EC2**: `18.117.195.190` (us-east-2)
+- **Frontend**: http://18.117.195.190:3000
+- **Backend**: http://18.117.195.190:5000
 
 ### 5. Configurar GitHub Actions
 
-```bash
-# Configurar secrets no GitHub (ver GITHUB_ACTIONS_SETUP.md)
-# DOCKER_USERNAME: ppsfafire
-# DOCKER_PASSWORD: [sua senha]
-# EC2_SSH_KEY: [conteúdo da chave .pem]
+Configure os seguintes secrets no GitHub:
 
-# Fazer push para testar o pipeline
-git push origin dev
-```
+- `DOCKER_USERNAME`: `ppsfafire`
+- `DOCKER_PASSWORD`: Sua senha do Docker Hub
+- `EC2_SSH_KEY`: Conteúdo da chave SSH privada (.pem)
 
 **Deploy Automático**: Push para `dev`, `staging` ou `master` → Deploy automático no EC2
 
 ## 🔧 Configuração da Infraestrutura AWS
 
-### 1. Configurar AWS CLI
+### 1. Configurar EC2
+
+- **Instância**: Ubuntu Server 22.04 LTS
+- **Tipo**: t2.micro ou superior
+- **Security Group**: Portas 22 (SSH), 3000 (Frontend), 5000 (Backend)
+- **IP Público**: 18.117.195.190
+
+### 2. Configurar Docker no EC2
 
 ```bash
-aws configure
+# Conectar via SSH
+ssh -i PPDS.pem admin@18.117.195.190
+
+# Instalar Docker
+sudo apt update
+sudo apt install docker.io docker-compose
+
+# Adicionar usuário ao grupo docker
+sudo usermod -aG docker $USER
 ```
 
-### 2. Criar Bucket S3 para Terraform State
-
-```bash
-aws s3 mb s3://devops-petronio-silva-terraform-state
-aws s3api put-bucket-versioning --bucket devops-petronio-silva-terraform-state --versioning-configuration Status=Enabled
-```
-
-### 3. Deploy da Infraestrutura
-
-```bash
-cd infrastructure
-
-# Inicializar Terraform
-terraform init
-
-# Planejar deploy
-terraform plan -var="environment=dev"
-
-# Aplicar infraestrutura
-terraform apply -var="environment=dev"
-```
-
-### 4. Configurar GitHub Secrets
+### 3. Configurar GitHub Secrets
 
 No repositório GitHub, adicione os seguintes secrets:
 
-- `AWS_ACCESS_KEY_ID`: Sua AWS Access Key
-- `AWS_SECRET_ACCESS_KEY`: Sua AWS Secret Key
+- `DOCKER_USERNAME`: `ppsfafire`
+- `DOCKER_PASSWORD`: Sua senha do Docker Hub
+- `EC2_SSH_KEY`: Conteúdo da chave SSH privada (.pem)
 
 ## 🔄 Fluxo de Deploy
 
@@ -146,8 +148,8 @@ No repositório GitHub, adicione os seguintes secrets:
 1. **Push para branch** → Trigger do GitHub Actions
 2. **Testes** → Execução de testes automatizados
 3. **Build** → Criação das imagens Docker
-4. **Push ECR** → Upload das imagens para AWS ECR
-5. **Deploy ECS** → Atualização do serviço ECS
+4. **Push Docker Hub** → Upload das imagens para Docker Hub
+5. **Deploy EC2** → Deploy via SSH no servidor EC2
 6. **Verificação** → Health check da aplicação
 
 ## 📁 Estrutura do Projeto
@@ -163,14 +165,9 @@ Devops-Petronio_Silva/
 │   ├── public/             # Arquivos públicos
 │   ├── package.json        # Dependências
 │   └── Dockerfile          # Container do frontend
-├── infrastructure/         # Terraform
-│   ├── modules/            # Módulos Terraform
-│   ├── main.tf            # Configuração principal
-│   └── variables.tf       # Variáveis
 ├── .github/workflows/      # GitHub Actions
 │   └── ci-cd.yml          # Pipeline CI/CD
 ├── docker-compose.yml      # Orquestração local
-├── package.json           # Scripts principais
 └── README.md              # Documentação
 ```
 
@@ -179,68 +176,64 @@ Devops-Petronio_Silva/
 ### Desenvolvimento Local
 
 ```bash
-# Instalar dependências
-npm run install:all
+# Instalar dependências do backend
+cd backend && npm install
 
-# Executar frontend e backend
-npm run dev
+# Instalar dependências do frontend
+cd frontend && npm install
 
-# Executar apenas backend
-npm run dev:backend
+# Executar backend
+cd backend && npm start
 
-# Executar apenas frontend
-npm run dev:frontend
+# Executar frontend
+cd frontend && npm start
 ```
 
 ### Docker
 
 ```bash
-# Usar script de comandos (recomendado)
-./docker-commands.sh build    # Build das imagens
-./docker-commands.sh up       # Iniciar containers
-./docker-commands.sh down     # Parar containers
-./docker-commands.sh logs     # Ver logs
-./docker-commands.sh status   # Status dos containers
-./docker-commands.sh test     # Testar aplicação
-./docker-commands.sh push     # Push para Docker Hub
-./docker-commands.sh clean    # Limpar tudo
+# Build das imagens
+docker-compose build
 
-# Ou usar Docker Compose diretamente
-docker-compose up --build
+# Executar containers
+docker-compose up
+
+# Executar em background
 docker-compose up -d
+
+# Parar containers
 docker-compose down
+
+# Ver logs
 docker-compose logs -f
+
+# Status dos containers
+docker-compose ps
 ```
 
-### Terraform
+### GitHub Actions
 
 ```bash
-# Inicializar
-terraform init
+# Deploy para desenvolvimento
+git push origin dev
 
-# Verificar sintaxe
-terraform validate
+# Deploy para staging
+git push origin staging
 
-# Planejar mudanças
-terraform plan
-
-# Aplicar mudanças
-terraform apply
-
-# Destruir infraestrutura
-terraform destroy
+# Deploy para produção
+git push origin master
 ```
 
 ## 🔍 Endpoints da API
 
-### Backend (Porta 3001)
+### Backend (Porta 5000)
 
 - `GET /api/health` - Status da API
 - `GET /api` - Informações da API
 - `GET /api/data` - Listar itens
 - `POST /api/data` - Criar novo item
 
-### Frontend (Porta 80)
+### Frontend (Porta 3000)
 
 - Interface web para interagir com a API
 
@@ -252,20 +245,24 @@ cd backend && npm test
 
 # Testes do frontend
 cd frontend && npm test
+
+# Testes automatizados (GitHub Actions)
+git push origin staging
 ```
 
 ## 📊 Monitoramento
 
 - **Health Checks**: Endpoint `/api/health`
-- **Logs**: CloudWatch Logs (AWS)
-- **Métricas**: ECS Service Metrics
+- **Logs**: Docker logs no EC2
+- **Status**: `docker-compose ps`
+- **GitHub Actions**: Pipeline de CI/CD
 
 ## 🔒 Segurança
 
-- Security Groups configurados
-- HTTPS habilitado no ALB
+- Security Groups configurados (portas 22, 3000, 5000)
 - Headers de segurança no nginx
 - Variáveis de ambiente para configurações sensíveis
+- Chaves SSH protegidas via GitHub Secrets
 
 ## 🚨 Troubleshooting
 
@@ -275,7 +272,7 @@ cd frontend && npm test
    ```bash
    # Verificar processos
    lsof -i :3000
-   lsof -i :3001
+   lsof -i :5000
    
    # Matar processo
    kill -9 <PID>
@@ -290,17 +287,29 @@ cd frontend && npm test
    sudo systemctl restart docker
    ```
 
-3. **Terraform erro de credenciais**
+3. **GitHub Actions falha**
    ```bash
-   # Verificar configuração AWS
-   aws sts get-caller-identity
+   # Verificar secrets configurados
+   # DOCKER_USERNAME, DOCKER_PASSWORD, EC2_SSH_KEY
+   
+   # Verificar logs do pipeline
+   # https://github.com/ppsfafire/Devops-Petronio_Silva/actions
+   ```
+
+4. **EC2 não responde**
+   ```bash
+   # Verificar status da instância
+   # Verificar Security Group (portas 3000, 5000)
+   # Verificar logs do Docker
+   ssh admin@18.117.195.190 "docker-compose logs"
    ```
 
 ## 📞 Suporte
 
 - **Autor**: Petronio Silva
+- **Email**: petroniopereirasilva@pos.fafire.br
 - **GitHub**: [ppsfafire/Devops-Petronio_Silva](https://github.com/ppsfafire/Devops-Petronio_Silva.git)
-- **Email**: [Seu email]
+- **Aplicação**: http://18.117.195.190:3000
 
 ## 📄 Licença
 
